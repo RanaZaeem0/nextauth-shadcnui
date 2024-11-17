@@ -1,3 +1,4 @@
+'use clinet'
 import { signIn } from "next-auth/react";
 import { getServerSession } from "next-auth";
 export default async function  home (){
@@ -12,7 +13,7 @@ console.log("server home",sesion);
 
                <div className="">
                   <h1>ome: </h1>
-                </div> home\
+                </div> 
         <button >sign in</button>
     </div>
 }
