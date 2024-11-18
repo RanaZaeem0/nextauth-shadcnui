@@ -1,44 +1,64 @@
-
-import CredentialsProvider from 'next-auth/providers/credentials';
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaClient } from "@prisma/client";
+import { db } from "./db";
+import bcrypt from "bcrypt"
 
 export const NEXT_AUTH = {
-    providers: [
-      CredentialsProvider({
-        name: 'Credentials',
-        credentials: {
-          email: { label: 'email', type: 'text', placeholder: '' },
-          password: { label: 'password', type: 'password', placeholder: '' },
-        },
-        async authorize(credentials: any) {
-          const { email, password } = credentials
-          return {
-            id: "1",
-            name:"zain",
-            email,
-            password
-          };
-        },
-      })
-    ],
-    secret: process.env.NEXTAUTH_SECRET,
-    callbacks: {
-      async jwt({ token,  user }:any) {
-          token.userId = token.sub
-      
-        return token
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "email", type: "text", placeholder: "Enter your email" },
+        password: { label: "password", type: "password", placeholder: "Enter your password" },
       },
-      session: ({ session, token, user }: any) => {
-        if (session && session.user) {
-          session.user.id = token.userId
-        }
-        if(session.user){
-          console.log("session.user true",session.user);
-          
-        }
-        return session
+      async authorize(credentials: any) {
+        const { email, password } = credentials;
+               const hashedPassword = await bcrypt.hash(password,10);
+        // Validate the user's credentials here (e.g., check in the database)
+          const userEcicterd = await db.user.findUnique({
+            where:{
+              email
+            }
+          })
+          if(userEcicterd){
+
+          }
+
+        const craeteUser =   await db.user.create({
+            data:{
+              email,
+              password:hashedPassword,
+            },
+          })
+          // Return user object if validation succeeds
+          return craeteUser;
+        // If validation fails, return null
+      },
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }: any) {
+      // Add user properties to token during the login phase
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
       }
+      return token;
     },
-    pages: {
-      signIn: "/signin"
+    async session({ session, token }: any) {
+      // Map token properties to session.user
+      if (session.user) {
+        session.user.id = token.id; // Add custom properties
+        session.user.name = token.name;
+        session.user.email = token.email;
+      }
+      console.log("Updated Session:", session);
+      return session;
+    },
+    page:{
+      signIn:"/signin"
     }
-  }
+  },
+};
