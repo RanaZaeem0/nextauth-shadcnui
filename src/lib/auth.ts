@@ -30,9 +30,7 @@ export const NEXT_AUTH = {
               password:hashedPassword,
             },
           })
-          // Return user object if validation succeeds
           return craeteUser;
-        // If validation fails, return null
       },
     }),
   ],
